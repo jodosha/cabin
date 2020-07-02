@@ -1,7 +1,7 @@
 GIT
   remote: https://github.com/hanami/controller.git
-  revision: 18a39362800c1769977dd5c24abd18f7fec51b60
-  branch: unstable
+  revision: efc901984e525a32ad9ed2a0f1c4f3212a30129f
+  branch: enhancement/view-context-exposures
   specs:
     hanami-controller (2.0.0.alpha1)
       hanami-utils (~> 2.0.alpha)
@@ -78,6 +78,7 @@ GEM
       dry-core (~> 0.4)
       dry-equalizer (~> 0.2)
     dry-inflector (0.2.0)
+    dry-initializer (3.0.3)
     dry-logic (1.0.6)
       concurrent-ruby (~> 1.0)
       dry-core (~> 0.2)
@@ -121,10 +122,41 @@ GEM
       hansi (~> 0.2.0)
       mustermann (= 1.1.1)
     nio4r (2.5.2)
+    pg (1.2.3)
     puma (4.3.5)
       nio4r (~> 2.0)
     rack (2.2.3)
+    rake (13.0.1)
+    rom (5.2.4)
+      rom-changeset (~> 5.2, >= 5.2.3)
+      rom-core (~> 5.2, >= 5.2.3)
+      rom-repository (~> 5.2, >= 5.2.2)
+    rom-changeset (5.2.3)
+      dry-core (~> 0.4)
+      rom-core (~> 5.2)
+      transproc (~> 1.0, >= 1.1.0)
+    rom-core (5.2.3)
+      concurrent-ruby (~> 1.1)
+      dry-container (~> 0.7)
+      dry-core (~> 0.4)
+      dry-equalizer (~> 0.2)
+      dry-inflector (~> 0.1)
+      dry-initializer (~> 3.0, >= 3.0.1)
+      dry-struct (~> 1.0)
+      dry-types (~> 1.0)
+      transproc (~> 1.0, >= 1.1.0)
+    rom-repository (5.2.2)
+      dry-core (~> 0.4)
+      dry-initializer (~> 3.0, >= 3.0.1)
+      rom-core (~> 5.2, >= 5.2.2)
+    rom-sql (3.2.0)
+      dry-core (~> 0.4)
+      dry-equalizer (~> 0.2)
+      dry-types (~> 1.0)
+      rom-core (~> 5.2, >= 5.2.1)
+      sequel (>= 4.49)
     ruby2_keywords (0.0.2)
+    sequel (5.34.0)
     temple (0.8.2)
     tilt (2.0.10)
     transproc (1.1.1)
@@ -140,7 +172,11 @@ DEPENDENCIES
   hanami-router!
   hanami-utils!
   hanami-view!
+  pg
   puma
+  rake
+  rom
+  rom-sql
 
 BUNDLED WITH
    2.1.4

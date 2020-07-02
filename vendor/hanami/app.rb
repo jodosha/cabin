@@ -6,6 +6,21 @@ require "pathname"
 # rubocop:disable Metrics/AbcSize
 # rubocop:disable Metrics/MethodLength
 module Hanami
+  def self.application?
+    true
+  end
+
+  # Reopens Hanami::Configuration from `hanami`
+  class Configuration
+    class Model
+      attr_accessor :databases
+    end
+
+    def model
+      @model ||= Model.new
+    end
+  end
+
   module App
     module Routing
       class Resolver
@@ -32,12 +47,18 @@ module Hanami
       def self.call(application: Hanami.application)
         return if @_booted
 
+        configure_router(application.configuration)
         configure_action(application.configuration)
-        configure_view(application.configuration)
-        configure_router_resolver(application.configuration)
+        configure_view(application)
+        configure_model(application)
+
         load_components(application)
 
         @_booted = true
+      end
+
+      def self.configure_router(configuration)
+        configuration.router.resolver = Hanami::App::Routing::Resolver
       end
 
       def self.configure_action(_configuration)
@@ -46,9 +67,10 @@ module Hanami
         # gem isn't present, let's move on with life
       end
 
-      def self.configure_view(configuration)
+      def self.configure_view(application)
         require "hanami/view"
 
+        configuration = application.configuration
         Hanami::View.config.paths = [configuration.root.join("app", "templates").to_s]
         Hanami::View.config.layouts_dir = configuration.views.layouts_dir
         Hanami::View.config.layout = configuration.views.default_layout
@@ -65,12 +87,22 @@ module Hanami
             )
           end
         end
+
+        application.container.register("view.context", Hanami::View::Context.new)
       rescue LoadError
         # gem isn't present, let's move on with life
       end
 
-      def self.configure_router_resolver(configuration)
-        configuration.router.resolver = Hanami::App::Routing::Resolver
+      def self.configure_model(application)
+        require_relative "./model"
+
+        application.configuration.model.databases.each do |name, (type, connection_url)|
+          rom = ROM.container(type, connection_url) do |config|
+            config.auto_registration(application.configuration.root.join("app"), namespace: application.namespace.name)
+          end
+
+          application.container.register("hanami.model.rom.container.#{name}", rom)
+        end
       end
 
       def self.load_components(application)
@@ -81,9 +113,20 @@ module Hanami
         inflector = application.configuration.inflector
         container = application.container
 
-        # FIXME: `reverse` is a ugly hack to force views to be loaded before actions,
-        #        because actions depends on views and so they must be loaded first.
-        Dir.glob(base_path.join("**", "*#{RUBY_FILE_EXT}")).sort.reverse.each do |path|
+        load_components_for(base_path.join("views"), relative_path_from, namespace, inflector, container)
+        load_directory(base_path.join("entities"))
+        load_components_for(base_path.join("repositories"), relative_path_from, namespace, inflector, container)
+        load_components_for(base_path.join("actions"), relative_path_from, namespace, inflector, container)
+      end
+
+      def self.load_directory(base_path)
+        Dir.glob(base_path.join("**", "*#{RUBY_FILE_EXT}")).sort.each do |path|
+          require_relative path
+        end
+      end
+
+      def self.load_components_for(base_path, relative_path_from, namespace, inflector, container)
+        Dir.glob(base_path.join("**", "*#{RUBY_FILE_EXT}")).sort.each do |path|
           require_relative path
 
           path = path.sub(relative_path_from, "").sub(RUBY_FILE_EXT, "")

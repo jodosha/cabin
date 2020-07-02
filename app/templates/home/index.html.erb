@@ -1,1 +1,11 @@
 <h1>Hello, World!</h1>
+
+<h2>Users</h2>
+
+<% if users.any? %>
+  <ul>
+  <% users.each do |user| %>
+    <li><%= user.name %></li>
+  <% end %>
+  </ul>
+<% end %>

@@ -1,0 +1,24 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+require "bundler/setup"
+require "irb"
+require_relative "../vendor/hanami/boot"
+
+module CLIUtils
+  def self.included(object) # rubocop:disable Metrics/AbcSize
+    super
+
+    container = Hanami.application.container
+    inflector = Hanami.application.configuration.inflector
+
+    repositories = container.keys.find_all { |key| key.match?(/\Arepositories/) }
+    repositories.each do |repo|
+      repo_name = inflector.pluralize(repo.split("repositories.").last).to_sym
+      object.define_method(repo_name) { container[repo] }
+    end
+  end
+end
+
+TOPLEVEL_BINDING.eval("self").__send__(:include, CLIUtils)
+IRB.start
